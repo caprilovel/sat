@@ -193,7 +193,7 @@ class ComputeCIndex(SurvivalEvaluationModule):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"predictions shape: {predictions.shape}")
             logger.debug(f"references shape: {references.shape}")
-
+        
         # Check if predictions is valid for computing metrics
         if predictions.size == 0 or predictions.ndim < 4:
             logger.warning(
@@ -254,6 +254,7 @@ class ComputeCIndex(SurvivalEvaluationModule):
         metrics_dict = {}
 
         for i in range(self.cfg.num_events):
+            print(predictions.shape, references.shape, i)
             metric_results = self.compute_event(predictions, references, i)
             metrics_dict.update(metric_results)
             cindex_mean += (
@@ -279,6 +280,70 @@ class ComputeCIndex(SurvivalEvaluationModule):
         metrics_dict["ipcw_avg"] = cindex_avg_mean / max(1, self.cfg.num_events)
 
         return metrics_dict
+
+class ComputeEventwiseCIndex(SurvivalEvaluationModule):
+    """Eventwise C-Index Evaluation Module.
+    This module computes the eventwise C-Index for survival analysis predictions.
+    """
+    def __init__(self, cfg, survival_train_path, duration_cuts):
+        """_summary_
+
+        Args:
+            cfg (_type_): _description_
+            survival_train_path (_type_): _description_
+            duration_cuts (_type_): _description_
+        """
+        self.cfg = cfg
+        self.survival_train = pd.read_csv(survival_train_path)
+        df = pd.read_csv(duration_cuts, header=None, names=["cuts"])
+        self.duration_cuts = df.cuts.values[1:]  # we do not need the start point
+
+    def compute(self, predictions, references):
+        predictions = self.survival_predictions(predictions)
+        num_samples = predictions.shape[0]
+        num_events = self.cfg.num_events
+
+        risks = predictions[:, 1, :, -1]
+
+        correct = 0
+        total = 0
+
+        for i in range(num_samples):
+            event_times = []
+            for e in range(num_events):
+                occurred = references[i, 1 * num_events + e]  
+                time = references[i, 3 * num_events + e]      
+                if occurred:
+                    event_times.append((e, time))
+
+            if len(event_times) < 2:
+                continue  
+            
+            sorted_real = sorted(event_times, key=lambda x: x[1])  
+            real_order = [e for e, _ in sorted_real]
+            
+            pred_order = list(np.argsort(-risks[i, [e for e, _ in event_times]]))
+            
+            
+            real_ranks = {e: rank for rank, e in enumerate(real_order)}
+            pred_ranks = {event_times[idx][0]: rank for rank, idx in enumerate(pred_order)}
+            
+            
+            
+            # in this implementation, we consider event 1 is ahead of event 2 
+            for j in range(len(real_order)):
+                for k in range(j + 1, len(real_order)):
+                    e1, e2 = real_order[j], real_order[k]
+                    if pred_ranks[e1] < pred_ranks[e2]:
+                        correct += 1
+                    elif pred_ranks[e1] > pred_ranks[e2]:
+                        pass  
+                    else:
+                        correct += 0.5
+                    total += 1
+
+        cindex = correct / total if total > 0 else 0.5
+        return {"eipcw_eventwise_cindex": cindex, "eipcw_eventwise_pairs": total}
 
 
 class ComputeMismatch(EvaluationModule):
@@ -394,7 +459,7 @@ class ComputeMSELoss(RegressionEvaluationModule):
         mse = evaluate.load("./sat/evaluate/mse")
 
         metric_dict = {}
-
+        print(f"predictions: {predictions['time_to_event']}")
         loss, event_losses = mse.compute(
             predictions=predictions["time_to_event"],
             references=references,

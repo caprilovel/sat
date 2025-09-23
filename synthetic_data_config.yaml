@@ -1,0 +1,18 @@
+num_events: 4
+num_bins: 20
+terminal_events:
+  - 3
+discrete: false
+event_ranks:
+  0: []
+  1: []
+  2: []
+  3: []
+event_groups:
+  0: [0, 1]
+  1: [0, 1]
+  2: [0, 1, 2]
+  3: [0, 1, 2]
+min_time: 0
+max_time: 20
+min_epoch: 50

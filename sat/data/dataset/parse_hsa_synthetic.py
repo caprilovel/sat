@@ -60,6 +60,7 @@ class hsa:
     scale_numerics: bool = True
     min_scale_numerics: float = 1.0
     kfold: int = 0
+    num_events: int = 4
 
     @log_on_start(DEBUG, "Create hsa data representation...")
     @log_on_error(
@@ -74,37 +75,42 @@ class hsa:
         logger.debug("Read data source")
         df = pd.read_csv(self.source, index_col="id")
 
+        # numeric_features = [
+        #     f"x_{i}" for i in range(1, 5 * (self.num_events + 1) + 1)  
+        # ]
+        
+        # check if there are exactly features starts with 'x_'
+        num_features = df.columns.str.startswith("x_").sum()
+        
         numeric_features = [
-            "x_1",
-            "x_2",
-            "x_3",
-            "x_4",
-            "x_5",
-            "x_6",
-            "x_7",
-            "x_8",
-            "x_9",
-            "x_10",
-            "x_11",
-            "x_12",
-            "x_13",
-            "x_14",
-            "x_15",
+            f"x_{i}" for i in range(1, num_features + 1)
         ]
-
+        
         df_features = df[numeric_features]
-        df_targets = df[["event1", "event2", "duration1", "duration2"]]
-        df_targets.loc[:, "event1"] = df_targets.loc[:, "event1"].astype(int)
-        df_targets.loc[:, "event2"] = df_targets.loc[:, "event2"].astype(int)
-        df_targets["durations"] = df[["duration1", "duration2"]].values.tolist()
-        df_targets["events"] = df[["event1", "event2"]].values.tolist()
+        # df_targets = df[["event1", "event2", 
+        #                  "duration1", "duration2"]]
+        df_targets = df[[f"event{i}" for i in range(1, self.num_events + 1)] +
+                         [f"duration{i}" for i in range(1, self.num_events + 1)]]
+        for i in range(1, self.num_events + 1):
+            df_targets.loc[:, f"event{i}"] = df_targets.loc[:, f"event{i}"].astype(int)
+        # df_targets.loc[:, "event1"] = df_targets.loc[:, "event1"].astype(int)
+        # df_targets.loc[:, "event2"] = df_targets.loc[:, "event2"].astype(int)
+        # df_targets.loc[:, "event3"] = df_targets.loc[:, "event3"].astype(int)
+        # df_targets.loc[:, "event4"] = df_targets.loc[:, "event4"].astype(int)
+        
+        df_targets["durations"] = df[[
+            f"duration{i}" for i in range(1, self.num_events + 1)
+                                      ]].values.tolist()
+        df_targets["events"] = df[[
+            f"event{i}" for i in range(1, self.num_events + 1)
+                                   ]].values.tolist()
 
         logger.debug(f"features: {df_features.head()}")
         logger.debug(f"Targets: {df_targets.head()}")
 
         # 2. encode the features
         # differentiate modalities, i.e., token = 0, numerics = 1
-        modality = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        modality = [1] * len(numeric_features)
 
         # min/max scaling of the numeric features
         if self.scale_numerics:

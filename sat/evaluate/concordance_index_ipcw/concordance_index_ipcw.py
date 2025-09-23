@@ -144,12 +144,30 @@ class CIIPCW(evaluate.Metric):
             from joblib import Parallel, delayed
 
             def compute_cindex(i, train_data, test_data, preds, cuts):
-                return concordance_index_ipcw(
-                    train_data,
-                    test_data,
-                    estimate=preds[:, i],
-                    tau=cuts[i],
-                )[0]
+                try:
+                    # Check if we have enough samples for this time point
+                    if preds.shape[0] == 0:
+                        logger.warning(f"Empty predictions array for time point {i}")
+                        return 0.5  # Return random predictor performance
+                    
+                    if len(train_data) == 0 or len(test_data) == 0:
+                        logger.warning(f"Empty train or test data for time point {i}")
+                        return 0.5
+                    
+                    estimate_vals = preds[:, i]
+                    if len(estimate_vals) == 0 or np.all(np.isnan(estimate_vals)):
+                        logger.warning(f"All NaN or empty estimates for time point {i}")
+                        return 0.5
+                    
+                    return concordance_index_ipcw(
+                        train_data,
+                        test_data,
+                        estimate=estimate_vals,
+                        tau=cuts[i],
+                    )[0]
+                except Exception as e:
+                    logger.error(f"Error computing c-index for time point {i}: {str(e)}")
+                    return 0.5  # Return random predictor performance on error
 
             # Use parallel processing with all available cores
             cindeces = Parallel(n_jobs=-1)(
@@ -163,13 +181,34 @@ class CIIPCW(evaluate.Metric):
             # But still using pre-converted predictions for efficiency
             cindeces = []
             for i, _ in enumerate(duration_cuts):
-                cindex = concordance_index_ipcw(
-                    et_train,
-                    et_test,
-                    estimate=predictions_np[:, i],
-                    tau=duration_cuts[i],
-                )[0]
-                cindeces.append(cindex)
+                try:
+                    # Check if we have enough samples for this time point
+                    if predictions_np.shape[0] == 0:
+                        logger.warning(f"Empty predictions array for time point {i}")
+                        cindeces.append(0.5)
+                        continue
+                    
+                    if len(et_train) == 0 or len(et_test) == 0:
+                        logger.warning(f"Empty train or test data for time point {i}")
+                        cindeces.append(0.5)
+                        continue
+                    
+                    estimate_vals = predictions_np[:, i]
+                    if len(estimate_vals) == 0 or np.all(np.isnan(estimate_vals)):
+                        logger.warning(f"All NaN or empty estimates for time point {i}")
+                        cindeces.append(0.5)
+                        continue
+                    
+                    cindex = concordance_index_ipcw(
+                        et_train,
+                        et_test,
+                        estimate=estimate_vals,
+                        tau=duration_cuts[i],
+                    )[0]
+                    cindeces.append(cindex)
+                except Exception as e:
+                    logger.error(f"Error computing c-index for time point {i}: {str(e)}")
+                    cindeces.append(0.5)  # Return random predictor performance on error
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"Computed c-index: {cindeces}")

@@ -7,3 +7,8 @@
   cfg: ${data}
   survival_train_path: ${data.label_transform.save_dir}/transformed_train_labels.csv
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+- _target_: sat.evaluate.eval_modules.ComputeEventwiseCIndex
+  cfg: ${data}
+  survival_train_path: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+

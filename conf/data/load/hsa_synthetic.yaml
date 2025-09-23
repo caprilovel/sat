@@ -1,6 +1,10 @@
 # @package _global_
 
-data_source: ${base_dir}/data/hsa-synthetic/simulated_data.csv
+# data_source: ${base_dir}/data/hsa-synthetic/simulated_data.csv
+# data_source: ${base_dir}/data/hsa-synthetic/synthetic_data.csv
+# data_source: ${base_dir}/data/hsa-synthetic/correlated_linear_data_event3.csv
+# data_source: ${base_dir}/data/hsa-synthetic/realistic_survival_data_event4.csv
+data_source: ${base_dir}/data/hsa-synthetic/signal_survival_data_event3.csv
 
 data:
   preprocess_data: false
@@ -9,7 +13,7 @@ data:
   duration_col: durations
   event_col: events
   id_col: id
-  num_events: 2
+  num_events: 3
   transformed_duration_cols:
     - t
     - f

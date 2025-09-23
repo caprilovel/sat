@@ -9,3 +9,4 @@ scale_numerics: true
 min_scale_numerics: 1.0
 name: ${dataset}
 kfold: ${cv.kfold}
+num_events: 3

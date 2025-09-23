@@ -31,6 +31,7 @@ logger = logging.get_default_logger()
 
 @rand.seed
 def _train_labeltransform(cfg: DictConfig) -> None:
+    # print(f"Config: {OmegaConf.to_yaml(cfg)}")
     dataset = hydra.utils.call(cfg.data.load)
     dataset = load.split_dataset(cfg.data, dataset)
 
@@ -157,6 +158,7 @@ def _train_labeltransform(cfg: DictConfig) -> None:
         header_names.append(f"duration_event{i+1}")
 
     # Apply headers and save with headers
+    # print(labels.columns, header_names)
     labels.columns = header_names
     labels.to_csv(transformed_labels, index=False, header=True)
 

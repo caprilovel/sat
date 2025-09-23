@@ -101,6 +101,7 @@ def safe_integrated_brier_score(survival_train, survival_test, estimate, times):
         # Compute IBS using only valid times
         try:
             # First, try with the filtered times directly
+            
             result = sksurv_integrated_brier_score(
                 survival_train, survival_test, estimate, valid_times
             )
