@@ -363,7 +363,7 @@ class DSMTaskHead(SurvivalTask):
         stacked_survival = torch.stack(all_survivals, dim=1)
         stacked_hazard = torch.stack(all_hazards, dim=1)
         # Pad hazard with zeros at the start to match survival dimensions
-        stacked_hazard = pad_col(stacked_hazard, val=0.0, where="start")
+        # stacked_hazard = pad_col(stacked_hazard, val=0.0, where="start")·
         stacked_risk = torch.stack(all_risks, dim=1)
 
         # Create output container with complete set of fields

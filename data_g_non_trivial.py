@@ -216,7 +216,9 @@ def make_signal_survival_synthetic(config, path="./", padding=True, censor_q=(0.
     for i in range(num_event):
         censored = np.sum(observed_flag[:, i] == 0)
         observed = np.sum(observed_flag[:, i] == 1)
-        print(f"event {i+1}: censored={censored}, observed={observed}")
+        print(f"event {i+1}: censored={censored} percentage={censored/num_samples*100:.1f}%, observed={observed} percentage={observed/num_samples*100:.1f}%")
+        print(f"  - True time range: {t_true[:, i].min():.1f} to {t_true[:, i].max():.1f}"
+              f", Observed time range: {observed_time[:, i].min():.1f} to {observed_time[:, i].max():.1f}")
 
     return x, observed_time, observed_flag, t_true
 
@@ -411,12 +413,15 @@ def make_signal_survival_synthetic_multi(config, path="./", padding=True, censor
     for i in range(num_event):
         censored = np.sum(observed_flag[:, i] == 0)
         observed = np.sum(observed_flag[:, i] == 1)
-        print(f"event {i+1}: censored={censored}, observed={observed}")
+        print(f"event {i+1}: censored={censored} percentage:{censored/num_samples*100:.1f}%, observed={observed} percentage:{observed/num_samples*100:.1f}%")
+        print(f"  - True time range: {t_true[:, i].min():.1f} to {t_true[:, i].max():.1f}"
+              f", Observed time range: {observed_time[:, i].min():.1f} to {observed_time[:, i].max():.1f}")
+        
     
     return features, observed_time, observed_flag, t_true
 
 if __name__ == "__main__":
-    config = {"num_events": 2, "min_time": 100, "max_time": 2000, "num_samples": 20000, }
+    config = {"num_events": 3, "min_time": 100, "max_time": 2000, "num_samples": 15000, }
     # make_realistic_survival_synthetic(config)
     make_signal_survival_synthetic(config, path='/Users/dingzhu/code/sat/data/hsa-synthetic/', padding=False)
     # make_signal_survival_synthetic_multi(config, path='/Users/dingzhu/code/sat/data/hsa-synthetic/', padding=False)
